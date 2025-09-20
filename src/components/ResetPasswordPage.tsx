@@ -15,20 +15,20 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     // Check if we have a valid session for password reset or recovery token
     const checkSession = async () => {
-      // Check for recovery token in URL (both hash and query params)
+      // Check for recovery tokens in URL (both hash and query params)
       const urlParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       
       const accessToken = urlParams.get('access_token') || hashParams.get('access_token');
       const refreshToken = urlParams.get('refresh_token') || hashParams.get('refresh_token');
-      const type = urlParams.get('type');
-      const token = urlParams.get('token');
+      const type = urlParams.get('type') || hashParams.get('type');
+      const verifyToken = urlParams.get('token');
       
-      if (type === 'recovery' && token) {
-        // Handle Supabase verification URL format
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: 'recovery',
+      if (type === 'recovery' && accessToken && refreshToken) {
+        // Handle the redirect from Supabase with tokens in hash
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
         });
         
         if (!error) {
@@ -36,11 +36,11 @@ export default function ResetPasswordPage() {
         } else {
           setError('Invalid or expired reset link. Please request a new password reset.');
         }
-      } else if (type === 'recovery' && accessToken && refreshToken) {
-        // Set the session with the tokens from URL
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
+      } else if (type === 'recovery' && verifyToken) {
+        // Handle direct Supabase verification URL format
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: verifyToken,
+          type: 'recovery',
         });
         
         if (!error) {

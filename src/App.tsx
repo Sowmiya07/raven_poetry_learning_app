@@ -16,10 +16,12 @@ import ProgressDashboard from './components/ProgressDashboard';
 function App() {
   // Check if we're on the reset password page
   const urlParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
   const isResetPasswordPage = window.location.hash === '#reset-password' || 
                               window.location.pathname === '/reset-password' ||
                               urlParams.get('type') === 'recovery' ||
-                              window.location.href.includes('verify?token=') && urlParams.get('type') === 'recovery';
+                              hashParams.get('type') === 'recovery' ||
+                              (hashParams.get('access_token') && hashParams.get('type') === 'recovery');
   
   if (isResetPasswordPage) {
     return <ResetPasswordPage />;
