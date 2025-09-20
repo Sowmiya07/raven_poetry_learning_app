@@ -18,34 +18,18 @@ export default function ResetPasswordPage() {
       setChecking(true);
       setError(null);
       
-      // Parse complex hash parameters like #reset-password#access_token=...
-      const fullHash = window.location.hash;
-      console.log('Full hash:', fullHash);
-      
-      let hashParams = new URLSearchParams();
-      if (fullHash.includes('#access_token')) {
-        // Extract everything after the last # that contains access_token
-        const tokenPart = fullHash.substring(fullHash.lastIndexOf('#') + 1);
-        console.log('Token part extracted:', tokenPart);
-        hashParams = new URLSearchParams(tokenPart);
-      } else if (fullHash.startsWith('#')) {
-        // Normal hash parsing
-        hashParams = new URLSearchParams(fullHash.substring(1));
-      }
-      
+      // Parse URL parameters from both hash and query string
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const urlParams = new URLSearchParams(window.location.search);
       
       const accessToken = urlParams.get('access_token') || hashParams.get('access_token');
       const refreshToken = urlParams.get('refresh_token') || hashParams.get('refresh_token');
       const type = urlParams.get('type') || hashParams.get('type');
-      const expiresAt = urlParams.get('expires_at') || hashParams.get('expires_at');
       
       console.log('Recovery tokens found:', { 
         accessToken: !!accessToken, 
         refreshToken: !!refreshToken, 
-        type, 
-        expiresAt,
-        fullUrl: window.location.href
+        type
       });
 
       if (accessToken && refreshToken) {
@@ -63,8 +47,8 @@ export default function ResetPasswordPage() {
             }
           } else if (data.session) {
             setValidSession(true);
-            // Clean up URL immediately after successful session
-            window.history.replaceState({}, document.title, window.location.pathname + '#reset-password');
+            // Clean up URL after successful session
+            window.history.replaceState({}, document.title, window.location.pathname);
           } else {
             setError('Unable to establish reset session. Please request a new password reset.');
           }
@@ -101,12 +85,9 @@ export default function ResetPasswordPage() {
   };
 
   useEffect(() => {
-    // Only clean up URL if we have a valid session
+    // Clean up URL if we have a valid session
     if (validSession) {
-      const currentUrl = window.location.href;
-      if (currentUrl.includes('access_token') || currentUrl.includes('refresh_token')) {
-        window.history.replaceState({}, document.title, window.location.pathname + '#reset-password');
-      }
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [validSession]);
 

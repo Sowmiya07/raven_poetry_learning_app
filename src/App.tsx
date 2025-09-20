@@ -14,32 +14,15 @@ import PoemHistory from './components/PoemHistory';
 import ProgressDashboard from './components/ProgressDashboard';
 
 function App() {
-  // Check if we're on the reset password page
-  const fullHash = window.location.hash; // Keep the full hash
-  console.log('Full hash:', fullHash);
+  // Check if we're on the reset password page by detecting recovery tokens
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const urlParams = new URLSearchParams(window.location.search);
   
-  // Handle complex hash like #reset-password#access_token=...
-  let hashParams = new URLSearchParams();
-  if (fullHash.includes('#access_token')) {
-    // Extract everything after the last # that contains access_token
-    const tokenPart = fullHash.substring(fullHash.lastIndexOf('#') + 1);
-    console.log('Token part:', tokenPart);
-    hashParams = new URLSearchParams(tokenPart);
-  } else if (fullHash.startsWith('#')) {
-    // Normal hash parsing
-    hashParams = new URLSearchParams(fullHash.substring(1));
-  }
+  const hasAccessToken = hashParams.get('access_token') || urlParams.get('access_token');
+  const hasRefreshToken = hashParams.get('refresh_token') || urlParams.get('refresh_token');
+  const isRecoveryType = hashParams.get('type') === 'recovery' || urlParams.get('type') === 'recovery';
   
-  const hasAccessToken = hashParams.get('access_token');
-  const hasRefreshToken = hashParams.get('refresh_token');
-  const isRecoveryType = hashParams.get('type') === 'recovery';
-  
-  console.log('Parsed tokens:', { hasAccessToken: !!hasAccessToken, hasRefreshToken: !!hasRefreshToken, isRecoveryType });
-  
-  const isResetPasswordPage = fullHash.includes('reset-password') || 
-                              window.location.pathname === '/reset-password' ||
-                              isRecoveryType ||
-                              (hasAccessToken && hasRefreshToken);
+  const isResetPasswordPage = isRecoveryType || (hasAccessToken && hasRefreshToken);
   
   if (isResetPasswordPage) {
     return <ResetPasswordPage />;
