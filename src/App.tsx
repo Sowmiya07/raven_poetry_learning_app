@@ -15,7 +15,9 @@ import ProgressDashboard from './components/ProgressDashboard';
 
 function App() {
   // Check if we're on the reset password page
-  const isResetPasswordPage = window.location.pathname === '/reset-password';
+  const isResetPasswordPage = window.location.hash === '#reset-password' || 
+                              window.location.pathname === '/reset-password' ||
+                              window.location.search.includes('type=recovery');
   
   if (isResetPasswordPage) {
     return <ResetPasswordPage />;
