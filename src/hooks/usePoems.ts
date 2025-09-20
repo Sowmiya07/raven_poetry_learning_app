@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { Poem } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocalStorage } from './useLocalStorage';
@@ -45,7 +46,7 @@ export function usePoems() {
   const addPoem = async (poemData: Omit<Poem, 'id' | 'createdAt'>) => {
     const newPoem: Poem = {
       ...poemData,
-      id: Date.now().toString(),
+      id: uuidv4(),
       createdAt: new Date(),
     };
 
