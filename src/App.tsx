@@ -21,7 +21,7 @@ function App() {
                               window.location.pathname === '/reset-password' ||
                               urlParams.get('type') === 'recovery' ||
                               hashParams.get('type') === 'recovery' ||
-                              (hashParams.get('access_token') && hashParams.get('type') === 'recovery');
+                              (hashParams.get('access_token') && hashParams.get('refresh_token'));
   
   if (isResetPasswordPage) {
     return <ResetPasswordPage />;

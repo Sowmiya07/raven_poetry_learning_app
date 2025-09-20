@@ -24,8 +24,9 @@ export default function ResetPasswordPage() {
       const accessToken = urlParams.get('access_token') || hashParams.get('access_token');
       const refreshToken = urlParams.get('refresh_token') || hashParams.get('refresh_token');
       const type = urlParams.get('type') || hashParams.get('type');
+      const expiresAt = urlParams.get('expires_at') || hashParams.get('expires_at');
       
-      if (type === 'recovery' && accessToken && refreshToken) {
+      if (accessToken && refreshToken && (type === 'recovery' || expiresAt)) {
         try {
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -46,10 +47,12 @@ export default function ResetPasswordPage() {
             setError('Unable to establish reset session. Please request a new password reset.');
           }
         } catch (err) {
+          console.error('Session error:', err);
           setError('Network error. Please check your connection and try again.');
         }
-      } else if (type === 'recovery') {
-        setError('Invalid reset link format. Please request a new password reset.');
+      } else if (accessToken || refreshToken || type === 'recovery') {
+        console.log('Incomplete recovery data:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+        setError('Incomplete reset link data. Please request a new password reset.');
       } else {
         // Check if there's already an active session
         try {
