@@ -18,11 +18,21 @@ export default function ResetPasswordPage() {
       setChecking(true);
       setError(null);
       
-      // Parse the hash parameters correctly
-      const hash = window.location.hash.substring(1); // Remove the # symbol
-      console.log('Full hash:', hash);
+      // Parse complex hash parameters like #reset-password#access_token=...
+      const fullHash = window.location.hash;
+      console.log('Full hash:', fullHash);
       
-      const hashParams = new URLSearchParams(hash);
+      let hashParams = new URLSearchParams();
+      if (fullHash.includes('#access_token')) {
+        // Extract everything after the last # that contains access_token
+        const tokenPart = fullHash.substring(fullHash.lastIndexOf('#') + 1);
+        console.log('Token part extracted:', tokenPart);
+        hashParams = new URLSearchParams(tokenPart);
+      } else if (fullHash.startsWith('#')) {
+        // Normal hash parsing
+        hashParams = new URLSearchParams(fullHash.substring(1));
+      }
+      
       const urlParams = new URLSearchParams(window.location.search);
       
       const accessToken = urlParams.get('access_token') || hashParams.get('access_token');

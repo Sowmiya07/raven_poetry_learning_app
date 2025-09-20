@@ -15,13 +15,28 @@ import ProgressDashboard from './components/ProgressDashboard';
 
 function App() {
   // Check if we're on the reset password page
-  const hash = window.location.hash.substring(1); // Remove the # symbol
-  const hashParams = new URLSearchParams(hash);
+  const fullHash = window.location.hash; // Keep the full hash
+  console.log('Full hash:', fullHash);
+  
+  // Handle complex hash like #reset-password#access_token=...
+  let hashParams = new URLSearchParams();
+  if (fullHash.includes('#access_token')) {
+    // Extract everything after the last # that contains access_token
+    const tokenPart = fullHash.substring(fullHash.lastIndexOf('#') + 1);
+    console.log('Token part:', tokenPart);
+    hashParams = new URLSearchParams(tokenPart);
+  } else if (fullHash.startsWith('#')) {
+    // Normal hash parsing
+    hashParams = new URLSearchParams(fullHash.substring(1));
+  }
+  
   const hasAccessToken = hashParams.get('access_token');
   const hasRefreshToken = hashParams.get('refresh_token');
   const isRecoveryType = hashParams.get('type') === 'recovery';
   
-  const isResetPasswordPage = window.location.hash === '#reset-password' || 
+  console.log('Parsed tokens:', { hasAccessToken: !!hasAccessToken, hasRefreshToken: !!hasRefreshToken, isRecoveryType });
+  
+  const isResetPasswordPage = fullHash.includes('reset-password') || 
                               window.location.pathname === '/reset-password' ||
                               isRecoveryType ||
                               (hasAccessToken && hasRefreshToken);
