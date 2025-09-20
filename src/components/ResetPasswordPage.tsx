@@ -11,65 +11,64 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [validSession, setValidSession] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Check if we have a valid session for password reset or recovery token
     const checkSession = async () => {
-      // Check for recovery tokens in URL (both hash and query params)
+      setChecking(true);
+      console.log('Checking recovery session...');
+      console.log('Current URL:', window.location.href);
+      
       const urlParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      
+      console.log('URL params:', Object.fromEntries(urlParams));
+      console.log('Hash params:', Object.fromEntries(hashParams));
       
       const accessToken = urlParams.get('access_token') || hashParams.get('access_token');
       const refreshToken = urlParams.get('refresh_token') || hashParams.get('refresh_token');
       const type = urlParams.get('type') || hashParams.get('type');
-      const verifyToken = urlParams.get('token');
+      
+      console.log('Extracted tokens:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
       
       if (type === 'recovery' && accessToken && refreshToken) {
-        // Handle the redirect from Supabase with tokens in hash
+        console.log('Setting session with recovery tokens...');
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
         
         if (!error) {
+          console.log('Session set successfully');
           setValidSession(true);
         } else {
-          setError('Invalid or expired reset link. Please request a new password reset.');
-        }
-      } else if (type === 'recovery' && verifyToken) {
-        // Handle direct Supabase verification URL format
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash: verifyToken,
-          type: 'recovery',
-        });
-        
-        if (!error) {
-          setValidSession(true);
-        } else {
+          console.error('Error setting session:', error);
           setError('Invalid or expired reset link. Please request a new password reset.');
         }
       } else {
-        // Check existing session
+        console.log('Checking existing session...');
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('Existing session:', !!session);
         if (session) {
           setValidSession(true);
         } else {
           setError('Invalid or expired reset link. Please request a new password reset.');
         }
       }
+      
+      setChecking(false);
     };
 
     checkSession();
   }, []);
 
   useEffect(() => {
-    // Clean up URL parameters after processing
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('type') === 'recovery') {
-      // Clean the URL without the tokens for security
+    // Clean up URL parameters after processing for security
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    if (hashParams.get('type') === 'recovery') {
       window.history.replaceState({}, document.title, window.location.pathname + '#reset-password');
     }
-  }, []);
+  }, [validSession]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,10 +131,17 @@ export default function ResetPasswordPage() {
         <div className="text-center mb-8">
           <Logo className="w-16 h-16 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-slate-800 mb-2">Reset Your Password</h2>
-          <p className="text-slate-600">Enter your new password below</p>
+          <p className="text-slate-600">
+            {checking ? 'Verifying reset link...' : 'Enter your new password below'}
+          </p>
         </div>
 
-        {!validSession ? (
+        {checking ? (
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-600">Verifying your reset link...</p>
+          </div>
+        ) : !validSession ? (
           <div className="text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <p className="text-red-600 mb-4">{error}</p>
