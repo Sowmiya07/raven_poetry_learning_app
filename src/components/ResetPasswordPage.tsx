@@ -13,17 +13,47 @@ export default function ResetPasswordPage() {
   const [validSession, setValidSession] = useState(false);
 
   useEffect(() => {
-    // Check if we have a valid session for password reset
+    // Check if we have a valid session for password reset or recovery token
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setValidSession(true);
+      // Check for recovery token in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+      const type = urlParams.get('type');
+      
+      if (type === 'recovery' && accessToken && refreshToken) {
+        // Set the session with the tokens from URL
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        
+        if (!error) {
+          setValidSession(true);
+        } else {
+          setError('Invalid or expired reset link. Please request a new password reset.');
+        }
       } else {
-        setError('Invalid or expired reset link. Please request a new password reset.');
+        // Check existing session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setValidSession(true);
+        } else {
+          setError('Invalid or expired reset link. Please request a new password reset.');
+        }
       }
     };
 
     checkSession();
+  }, []);
+
+  useEffect(() => {
+    // Clean up URL parameters after processing
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('type') === 'recovery') {
+      // Clean the URL without the tokens for security
+      window.history.replaceState({}, document.title, window.location.pathname + '#reset-password');
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
