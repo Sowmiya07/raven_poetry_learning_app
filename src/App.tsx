@@ -7,12 +7,20 @@ import { getFeedbackForPoem } from './services/feedbackService';
 import Header from './components/Header';
 import AuthModal from './components/AuthModal';
 import DatabaseStatus from './components/DatabaseStatus';
+import ResetPasswordPage from './components/ResetPasswordPage';
 import ThemeSelector from './components/ThemeSelector';
 import WritingEditor from './components/WritingEditor';
 import PoemHistory from './components/PoemHistory';
 import ProgressDashboard from './components/ProgressDashboard';
 
 function App() {
+  // Check if we're on the reset password page
+  const isResetPasswordPage = window.location.pathname === '/reset-password';
+  
+  if (isResetPasswordPage) {
+    return <ResetPasswordPage />;
+  }
+
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<'write' | 'history' | 'progress'>('write');
   const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
