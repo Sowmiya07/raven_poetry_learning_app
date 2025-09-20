@@ -13,7 +13,7 @@ export default function DatabaseStatus() {
   const checkDatabaseConnection = async () => {
     try {
       // Test basic connection
-      const { data, error: connectionError } = await supabase.auth.getSession();
+      const { error: connectionError } = await supabase.auth.getSession();
       
       if (connectionError) {
         setStatus('error');
@@ -30,7 +30,7 @@ export default function DatabaseStatus() {
       if (tableError) {
         if (tableError.message.includes('relation "poems" does not exist')) {
           setStatus('setup-needed');
-          setError('Database tables need to be created. Please run the migration.');
+          setError('Database tables need to be created. The migration file is ready but needs to be applied.');
         } else {
           setStatus('error');
           setError(`Database error: ${tableError.message}`);
@@ -101,7 +101,7 @@ export default function DatabaseStatus() {
             <div className="font-medium text-sm">{getStatusMessage()}</div>
             {status === 'setup-needed' && (
               <div className="text-xs mt-1">
-                Click "Connect to Supabase" in the top right, then the database will be set up automatically.
+                The migration file exists in supabase/migrations/. You need to apply it to create the poems table in your Supabase project.
               </div>
             )}
             {status === 'error' && error && (
