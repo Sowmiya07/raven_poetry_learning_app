@@ -15,13 +15,28 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     // Check if we have a valid session for password reset or recovery token
     const checkSession = async () => {
-      // Check for recovery token in URL
+      // Check for recovery token in URL (both hash and query params)
       const urlParams = new URLSearchParams(window.location.search);
-      const accessToken = urlParams.get('access_token');
-      const refreshToken = urlParams.get('refresh_token');
-      const type = urlParams.get('type');
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
       
-      if (type === 'recovery' && accessToken && refreshToken) {
+      const accessToken = urlParams.get('access_token') || hashParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token') || hashParams.get('refresh_token');
+      const type = urlParams.get('type');
+      const token = urlParams.get('token');
+      
+      if (type === 'recovery' && token) {
+        // Handle Supabase verification URL format
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: token,
+          type: 'recovery',
+        });
+        
+        if (!error) {
+          setValidSession(true);
+        } else {
+          setError('Invalid or expired reset link. Please request a new password reset.');
+        }
+      } else if (type === 'recovery' && accessToken && refreshToken) {
         // Set the session with the tokens from URL
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
