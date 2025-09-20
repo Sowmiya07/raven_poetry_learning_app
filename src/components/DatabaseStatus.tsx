@@ -11,6 +11,13 @@ export default function DatabaseStatus() {
   }, []);
 
   const checkDatabaseConnection = async () => {
+    // Check if Supabase is properly configured
+    if (!supabase) {
+      setStatus('error');
+      setError('Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.');
+      return;
+    }
+
     try {
       // Test basic connection
       const { error: connectionError } = await supabase.auth.getSession();
