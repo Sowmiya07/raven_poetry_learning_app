@@ -14,18 +14,8 @@ import PoemHistory from './components/PoemHistory';
 import ProgressDashboard from './components/ProgressDashboard';
 
 function App() {
-  // Check if we're on the reset password page by detecting recovery tokens
-  const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  const urlParams = new URLSearchParams(window.location.search);
-  
-  const hasAccessToken = hashParams.get('access_token') || urlParams.get('access_token');
-  const hasRefreshToken = hashParams.get('refresh_token') || urlParams.get('refresh_token');
-  const tokenType = hashParams.get('type') || urlParams.get('type');
-  const isRecoveryType = tokenType === 'recovery';
-  const isSignupConfirmation = tokenType === 'signup';
-  
-  // Only show reset password page for actual password recovery, not signup confirmation
-  const isResetPasswordPage = isRecoveryType && hasAccessToken && hasRefreshToken;
+  // Check if we're on the reset password page by URL path
+  const isResetPasswordPage = window.location.pathname === '/reset-password';
   
   if (isResetPasswordPage) {
     return <ResetPasswordPage />;

@@ -32,12 +32,6 @@ export default function ResetPasswordPage() {
         type
       });
 
-      // Only proceed if this is actually a password recovery
-      if (type !== 'recovery') {
-        setError('This is not a password reset link. Please use the correct link from your password reset email.');
-        setChecking(false);
-        return;
-      }
       if (accessToken && refreshToken) {
         try {
           const { data, error } = await supabase.auth.setSession({
@@ -53,8 +47,10 @@ export default function ResetPasswordPage() {
             }
           } else if (data.session) {
             setValidSession(true);
-            // Clean up URL after successful session
-            window.history.replaceState({}, document.title, window.location.pathname);
+            // Clean up URL hash after successful session but keep the path
+            if (window.location.hash) {
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
           } else {
             setError('Unable to establish reset session. Please request a new password reset.');
           }
@@ -62,7 +58,7 @@ export default function ResetPasswordPage() {
           console.error('Session error:', err);
           setError('Network error. Please check your connection and try again.');
         }
-      } else if (accessToken || refreshToken || type === 'recovery') {
+      } else if (accessToken || refreshToken) {
         console.log('Incomplete recovery data:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
         setError('Incomplete reset link data. Please request a new password reset.');
       } else {

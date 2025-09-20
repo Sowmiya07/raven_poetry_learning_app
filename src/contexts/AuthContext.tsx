@@ -68,8 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    // Use the current origin for redirect - tokens will be in hash
-    const redirectUrl = `${window.location.protocol}//${window.location.host}/`;
+    // Use the reset-password path for redirect
+    const redirectUrl = `${window.location.protocol}//${window.location.host}/reset-password`;
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
