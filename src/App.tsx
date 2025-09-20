@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Poem, Theme } from './types';
-import { useLocalStorage } from './hooks/useLocalStorage';
+import { Theme } from './types';
+import { useAuth } from './contexts/AuthContext';
+import { usePoems } from './hooks/usePoems';
 import { useStreak } from './hooks/useStreak';
 import { getFeedbackForPoem } from './services/feedbackService';
 import Header from './components/Header';
+import AuthModal from './components/AuthModal';
 import ThemeSelector from './components/ThemeSelector';
 import WritingEditor from './components/WritingEditor';
 import PoemHistory from './components/PoemHistory';
 import ProgressDashboard from './components/ProgressDashboard';
 
 function App() {
+  const { user } = useAuth();
   const [currentView, setCurrentView] = useState<'write' | 'history' | 'progress'>('write');
   const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
   const [isWriting, setIsWriting] = useState(false);
-  const [poems, setPoems] = useLocalStorage<Poem[]>('raven-poems', []);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { poems, addPoem, updatePoem, syncing } = usePoems();
   const { streakData, updateStreak, updateBadges } = useStreak();
 
   useEffect(() => {
@@ -35,14 +39,8 @@ function App() {
     setSelectedTheme(null);
   };
 
-  const handleSavePoem = (poemData: Omit<Poem, 'id' | 'createdAt'>) => {
-    const newPoem: Poem = {
-      ...poemData,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-    };
-
-    setPoems(prevPoems => [newPoem, ...prevPoems]);
+  const handleSavePoem = async (poemData: Omit<Poem, 'id' | 'createdAt'>) => {
+    const newPoem = await addPoem(poemData);
     updateStreak();
     
     // Reset writing state
@@ -50,7 +48,7 @@ function App() {
     setSelectedTheme(null);
   };
 
-  const handleGetFeedback = async (poem: Poem) => {
+  const handleGetFeedback = async (poem: any) => {
     return await getFeedbackForPoem(poem);
   };
 
@@ -68,7 +66,17 @@ function App() {
         currentView={currentView}
         onViewChange={handleViewChange}
         streakCount={streakData.current}
+        onAuthClick={() => setShowAuthModal(true)}
       />
+
+      {syncing && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2">
+          <div className="max-w-6xl mx-auto flex items-center justify-center space-x-2 text-blue-700">
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-sm">Syncing your poems...</span>
+          </div>
+        </div>
+      )}
 
       {currentView === 'write' && (
         <>
@@ -129,6 +137,11 @@ function App() {
           </button>
         </div>
       </div>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 }
