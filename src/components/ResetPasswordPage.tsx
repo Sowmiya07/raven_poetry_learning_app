@@ -37,6 +37,8 @@ export default function ResetPasswordPage() {
         expiresAt,
         fullUrl: window.location.href
       });
+
+      if (accessToken && refreshToken) {
         try {
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
