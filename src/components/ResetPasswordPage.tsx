@@ -32,6 +32,12 @@ export default function ResetPasswordPage() {
         type
       });
 
+      // Only proceed if this is actually a password recovery
+      if (type !== 'recovery') {
+        setError('This is not a password reset link. Please use the correct link from your password reset email.');
+        setChecking(false);
+        return;
+      }
       if (accessToken && refreshToken) {
         try {
           const { data, error } = await supabase.auth.setSession({

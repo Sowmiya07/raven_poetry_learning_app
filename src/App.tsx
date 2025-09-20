@@ -20,9 +20,12 @@ function App() {
   
   const hasAccessToken = hashParams.get('access_token') || urlParams.get('access_token');
   const hasRefreshToken = hashParams.get('refresh_token') || urlParams.get('refresh_token');
-  const isRecoveryType = hashParams.get('type') === 'recovery' || urlParams.get('type') === 'recovery';
+  const tokenType = hashParams.get('type') || urlParams.get('type');
+  const isRecoveryType = tokenType === 'recovery';
+  const isSignupConfirmation = tokenType === 'signup';
   
-  const isResetPasswordPage = isRecoveryType || (hasAccessToken && hasRefreshToken);
+  // Only show reset password page for actual password recovery, not signup confirmation
+  const isResetPasswordPage = isRecoveryType && hasAccessToken && hasRefreshToken;
   
   if (isResetPasswordPage) {
     return <ResetPasswordPage />;
