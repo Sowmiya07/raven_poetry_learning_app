@@ -16,43 +16,51 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     const checkSession = async () => {
       setChecking(true);
-      console.log('Checking recovery session...');
-      console.log('Current URL:', window.location.href);
+      setError(null);
       
       const urlParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      
-      console.log('URL params:', Object.fromEntries(urlParams));
-      console.log('Hash params:', Object.fromEntries(hashParams));
       
       const accessToken = urlParams.get('access_token') || hashParams.get('access_token');
       const refreshToken = urlParams.get('refresh_token') || hashParams.get('refresh_token');
       const type = urlParams.get('type') || hashParams.get('type');
       
-      console.log('Extracted tokens:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
-      
       if (type === 'recovery' && accessToken && refreshToken) {
-        console.log('Setting session with recovery tokens...');
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-        
-        if (!error) {
-          console.log('Session set successfully');
-          setValidSession(true);
-        } else {
-          console.error('Error setting session:', error);
-          setError('Invalid or expired reset link. Please request a new password reset.');
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          
+          if (error) {
+            if (error.message.includes('expired') || error.message.includes('invalid')) {
+              setError('This password reset link has expired. Please request a new password reset.');
+            } else {
+              setError(`Authentication error: ${error.message}`);
+            }
+          } else if (data.session) {
+            setValidSession(true);
+            // Clean up URL immediately after successful session
+            window.history.replaceState({}, document.title, window.location.pathname + '#reset-password');
+          } else {
+            setError('Unable to establish reset session. Please request a new password reset.');
+          }
+        } catch (err) {
+          setError('Network error. Please check your connection and try again.');
         }
+      } else if (type === 'recovery') {
+        setError('Invalid reset link format. Please request a new password reset.');
       } else {
-        console.log('Checking existing session...');
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('Existing session:', !!session);
-        if (session) {
-          setValidSession(true);
-        } else {
-          setError('Invalid or expired reset link. Please request a new password reset.');
+        // Check if there's already an active session
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            setValidSession(true);
+          } else {
+            setError('No active reset session found. Please use the link from your email.');
+          }
+        } catch (err) {
+          setError('Unable to verify session. Please request a new password reset.');
         }
       }
       
@@ -62,11 +70,18 @@ export default function ResetPasswordPage() {
     checkSession();
   }, []);
 
+  const requestNewReset = () => {
+    // Redirect to main app where user can request new reset
+    window.location.href = '/?request-reset=true';
+  };
+
   useEffect(() => {
-    // Clean up URL parameters after processing for security
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    if (hashParams.get('type') === 'recovery') {
-      window.history.replaceState({}, document.title, window.location.pathname + '#reset-password');
+    // Only clean up URL if we have a valid session
+    if (validSession) {
+      const currentUrl = window.location.href;
+      if (currentUrl.includes('access_token') || currentUrl.includes('refresh_token')) {
+        window.history.replaceState({}, document.title, window.location.pathname + '#reset-password');
+      }
     }
   }, [validSession]);
 
@@ -92,7 +107,11 @@ export default function ResetPasswordPage() {
       });
 
       if (error) {
-        setError(error.message);
+        if (error.message.includes('session')) {
+          setError('Your reset session has expired. Please request a new password reset.');
+        } else {
+          setError(error.message);
+        }
       } else {
         setSuccess(true);
         // Redirect to main app after 3 seconds
@@ -101,7 +120,7 @@ export default function ResetPasswordPage() {
         }, 3000);
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
