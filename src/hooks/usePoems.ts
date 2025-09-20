@@ -7,7 +7,7 @@ import { syncPoemsToCloud, loadPoemsFromCloud, savePoemToCloud } from '../servic
 export function usePoems() {
   const { user } = useAuth();
   const [localPoems, setLocalPoems] = useLocalStorage<Poem[]>('raven-poems', []);
-  const [poems, setPoems] = useState<Poem[]>(localPoems);
+  const [poems, setPoems] = useState<Poem[]>(convertDates(localPoems));
   const [syncing, setSyncing] = useState(false);
 
   // Load poems when user signs in
@@ -15,7 +15,7 @@ export function usePoems() {
     if (user) {
       loadCloudPoems();
     } else {
-      setPoems(localPoems);
+      setPoems(convertDates(localPoems));
     }
   }, [user]);
 
@@ -27,16 +27,16 @@ export function usePoems() {
       const cloudPoems = await loadPoemsFromCloud(user.id);
       
       // Merge local and cloud poems, prioritizing cloud
-      const mergedPoems = mergePoems(localPoems, cloudPoems);
+      const mergedPoems = mergePoems(convertDates(localPoems), cloudPoems);
       setPoems(mergedPoems);
       
       // Sync any local-only poems to cloud
       if (localPoems.length > 0) {
-        await syncPoemsToCloud(localPoems, user.id);
+        await syncPoemsToCloud(convertDates(localPoems), user.id);
       }
     } catch (error) {
       console.error('Error loading cloud poems:', error);
-      setPoems(localPoems);
+      setPoems(convertDates(localPoems));
     } finally {
       setSyncing(false);
     }
@@ -83,6 +83,13 @@ export function usePoems() {
     updatePoem,
     syncing,
   };
+}
+
+function convertDates(poems: Poem[]): Poem[] {
+  return poems.map(poem => ({
+    ...poem,
+    createdAt: typeof poem.createdAt === 'string' ? new Date(poem.createdAt) : poem.createdAt
+  }));
 }
 
 function mergePoems(localPoems: Poem[], cloudPoems: Poem[]): Poem[] {
