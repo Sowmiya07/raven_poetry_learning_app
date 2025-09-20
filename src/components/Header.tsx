@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, LogIn } from 'lucide-react';
+import { BookOpen, LogIn, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
 import UserMenu from './UserMenu';
