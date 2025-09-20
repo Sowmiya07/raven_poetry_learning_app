@@ -6,6 +6,7 @@ import { useStreak } from './hooks/useStreak';
 import { getFeedbackForPoem } from './services/feedbackService';
 import Header from './components/Header';
 import AuthModal from './components/AuthModal';
+import DatabaseStatus from './components/DatabaseStatus';
 import ThemeSelector from './components/ThemeSelector';
 import WritingEditor from './components/WritingEditor';
 import PoemHistory from './components/PoemHistory';
@@ -68,6 +69,8 @@ function App() {
         streakCount={streakData.current}
         onAuthClick={() => setShowAuthModal(true)}
       />
+
+      <DatabaseStatus />
 
       {syncing && (
         <div className="bg-blue-50 border-b border-blue-200 px-4 py-2">
