@@ -18,15 +18,25 @@ export default function ResetPasswordPage() {
       setChecking(true);
       setError(null);
       
+      // Parse the hash parameters correctly
+      const hash = window.location.hash.substring(1); // Remove the # symbol
+      console.log('Full hash:', hash);
+      
+      const hashParams = new URLSearchParams(hash);
       const urlParams = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
       
       const accessToken = urlParams.get('access_token') || hashParams.get('access_token');
       const refreshToken = urlParams.get('refresh_token') || hashParams.get('refresh_token');
       const type = urlParams.get('type') || hashParams.get('type');
       const expiresAt = urlParams.get('expires_at') || hashParams.get('expires_at');
       
-      if (accessToken && refreshToken && (type === 'recovery' || expiresAt)) {
+      console.log('Recovery tokens found:', { 
+        accessToken: !!accessToken, 
+        refreshToken: !!refreshToken, 
+        type, 
+        expiresAt,
+        fullUrl: window.location.href
+      });
         try {
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
