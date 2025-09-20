@@ -32,6 +32,7 @@ function App() {
   const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
   const [isWriting, setIsWriting] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const { poems, addPoem, updatePoem, syncing } = usePoems();
   const { streakData, updateStreak, updateBadges } = useStreak();
 
